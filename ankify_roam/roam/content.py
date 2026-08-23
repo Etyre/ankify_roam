@@ -332,6 +332,7 @@ class ClozeRightBracket(BlockContentItem):
     - [[::hint}]]
     - [[}]]
     - [[::hint]]}
+    - [[::]]hint}
     - }
     - ::hint}
     """
@@ -346,6 +347,7 @@ class ClozeRightBracket(BlockContentItem):
         return "|".join([
             "\[\[(?:::[^}\[]*)?}\]\]", # [[}]] or [[::hint}]] 
             "\[\[(?:::[^}\[]*)\]\]}", # [[::hint]]}
+            "\[\[::\]\][^}\[]*}(?!})", # [[::]]hint}
             "(?:::[^}\[]*)}(?!})", # ::hint}
             "(?<!})}(?!})", # }
         ])
@@ -355,6 +357,10 @@ class ClozeRightBracket(BlockContentItem):
         if string.startswith("[[") and string.endswith("]]"):
             hint = ClozeHint(re.sub("[\[\]}]", "", string)[2:]) if "::" in string else None
             enclosed = True
+        # [[::]]hint}
+        elif string.startswith("[[::]]") and string.endswith("}"):
+            hint = ClozeHint(string[len("[[::]]"):-1], sep_enclosed=True)
+            enclosed = False
         # [[::hint]]}
         elif string.startswith("[[") and string.endswith("}"):
             hint = ClozeHint(re.sub("[\[\]}]", "", string)[2:], enclosed=True)
@@ -387,36 +393,51 @@ class ClozeHint(BlockContentItem):
     """
     - {something::hint}
     - {something[[::hint]]}
+    - {something[[::]]hint}
     - [[{]]something::hint[[}]]
     - [[{]]something[[::hint}]]
+    - [[{]]something[[::]]hint[[}]]
+
+    Args:
+        enclosed (bool): the whole hint is wrapped in a page ref, e.g. "[[::hint]]"
+        sep_enclosed (bool): only the "::" separator is wrapped in a page ref,
+            e.g. "[[::]]hint" (what Roam produces when typing "[[" auto-closes
+            to "[[]]")
     """
-    def __init__(self, text, enclosed=False, string=None):
+    def __init__(self, text, enclosed=False, string=None, sep_enclosed=False):
         self.text = text
         self.enclosed = enclosed
+        self.sep_enclosed = sep_enclosed
         self.string = string
 
     @classmethod
     def create_pattern(cls, string):
         return "|".join([
-            "\[\[::[^\]]*\]\]",
-            "::[^}\[]*"
+            "\[\[::\]\][^}\[]*", # [[::]]hint
+            "\[\[::[^\]]*\]\]", # [[::hint]]
+            "::[^}\[]*" # ::hint
         ])
 
     @classmethod
     def from_string(cls, string, **kwargs):
-        if string.startswith("[["):
+        enclosed = sep_enclosed = False
+        if string.startswith("[[::]]"):
+            sep_enclosed = True
+            hint = string[len("[[::]]"):]
+        elif string.startswith("[["):
             enclosed = True
             hint = string[2:-2] # remove surround brackets
+            hint = hint[2:] # remove '::' prefix 
         else:
-            enclosed = False
-            hint = string
-        hint = hint[2:] # remove '::' prefix 
-        return cls(hint, enclosed, string=string)
+            hint = string[2:] # remove '::' prefix 
+        return cls(hint, enclosed, string=string, sep_enclosed=sep_enclosed)
 
     def to_string(self):
         res = "::" + str(self.text)
         if self.enclosed:
             res = "[[" + res + "]]"
+        elif self.sep_enclosed:
+            res = "[[::]]" + str(self.text)
         return res
 
     def to_html(self):

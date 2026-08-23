@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- Fix cloze hints written as `{text[[::]]hint}` (the form Roam produces when `[[` auto-closes to `[[]]`) leaving a stray `[[` in the answer, e.g. `{Harvard[[::]]college}` became `{{c1::Harvard[[::college}}` in Anki and showed `Harvard[[` on the back of the card. Also fixes the `[[{]]text[[::]]hint[[}]]` form, which was parsed as a page ref titled `::`.
+
 ## 0.2.2
 
 ### Fixes

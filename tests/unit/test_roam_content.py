@@ -164,6 +164,36 @@ class TestCloze(unittest.TestCase):
         cloze = Cloze.from_string(string)
         self.assertEqual(cloze.hint.text, "hint with double colons :: in it")
 
+        # "[[::]]hint" - what Roam produces when typing "[[" auto-closes to "[[]]"
+        string = "{text[[::]]hint after empty page ref}"
+        cloze = Cloze.from_string(string)
+        self.assertEqual(cloze.inner.to_string(), "text")
+        self.assertEqual(cloze.hint.text, "hint after empty page ref")
+        self.assertEqual(cloze.to_string("roam"), string)
+        self.assertEqual(cloze.to_html(), "{{c1::text::hint after empty page ref}}")
+
+        string = "{c1:text[[::]]hint}"
+        cloze = Cloze.from_string(string)
+        self.assertEqual(cloze.inner.to_string(), "text")
+        self.assertEqual(cloze.hint.text, "hint")
+        self.assertEqual(cloze.to_string("roam"), string)
+        self.assertEqual(cloze.to_html(), "{{c1::text::hint}}")
+
+        string = "[[{]]text[[::]]hint[[}]]"
+        cloze = Cloze.from_string(string)
+        self.assertEqual(cloze.inner.to_string(), "text")
+        self.assertEqual(cloze.hint.text, "hint")
+        self.assertEqual(cloze.to_string("roam"), string)
+        self.assertEqual(cloze.to_html(), "{{c1::text::hint}}")
+
+        string = "{[[alkali metals]][[::]]elemental group}"
+        cloze = Cloze.from_string(string)
+        self.assertEqual(cloze.inner.to_string(), "[[alkali metals]]")
+        self.assertEqual(cloze.hint.text, "elemental group")
+        self.assertEqual(cloze.to_string("roam"), string)
+        self.assertTrue(cloze.to_html().endswith("::elemental group}}"))
+        self.assertNotIn("[[::", cloze.to_html())
+
     def test_find_and_replace(self):
         a = Cloze.find_and_replace("Something with a {cloze}")
         b = [String("Something with a "), Cloze("cloze", id=1)]
