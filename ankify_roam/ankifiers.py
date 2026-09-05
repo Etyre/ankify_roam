@@ -94,7 +94,10 @@ class RoamGraphAnkifier:
                 note_id = anki.get_note_id(ankified_note)
                 if note_id:
                     existing_fields = {k: v['value'] for k,v in anki.get_note(note_id)['fields'].items()}
-                    if existing_fields == ankified_note['fields']:
+                    # Compare only the fields ankify_roam owns. Other fields on
+                    # the note type are neither compared nor written.
+                    owned_existing = {k: existing_fields.get(k, "") for k in ankified_note['fields']}
+                    if owned_existing == ankified_note['fields']:
                         num_no_change += 1
                     else:
                         anki.update_note(ankified_note, note_id)
@@ -285,8 +288,12 @@ class BlockAnkifier:
             htmls.append(self.back_to_html(block, proc_cloze=False, **kwargs))
         htmls = [re.sub("[%s]" % ASCII_NON_PRINTABLE, "", html) for html in htmls]
 
-        # Assign to content to field names
-        fields = {fn: html for fn, html in zip_longest(field_names, htmls, fillvalue="")}
+        # Assign content to the leading field names only. Fields ankify_roam
+        # doesn't generate (e.g. "Extra", or user-added fields such as
+        # "logseq uid") are left out of the dict so that they are never sent
+        # to Anki, and therefore never blanked on update.
+        content_field_names = [fn for fn in field_names if fn != "uid"][:len(htmls)]
+        fields = dict(zip(content_field_names, htmls))
         if "uid" in field_names:
             fields["uid"] = block.uid
 
