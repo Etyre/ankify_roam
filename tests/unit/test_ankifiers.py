@@ -183,6 +183,34 @@ class TestBlockAnkifier(unittest.TestCase):
         }
         self.assertEqual(expected, ankifier.ankify(block))
 
+    def test_only_owned_fields_are_written(self):
+        """Fields ankify_roam doesn't generate (Extra, user-added fields) must
+        not appear in the note dict, otherwise updateNoteFields blanks them."""
+        block = Block(
+            content=BlockContent.from_string("question"),
+            children=[Block.from_string("answer")],
+            parent=Page("page")
+        )
+        ankifier = BlockAnkifier(
+            note_basic="my basic",
+            field_names={"my basic": ["Front", "Back", "Extra", "uid",
+                                      "parent uid", "logseq uid", "logseq parent uid"]}
+        )
+        fields = ankifier.ankify(block)["fields"]
+        self.assertEqual(set(fields.keys()), {"Front", "Back", "uid"})
+
+        block = Block(
+            content=BlockContent.from_string("a {cloze} question"),
+            parent=Page("page")
+        )
+        ankifier = BlockAnkifier(
+            note_cloze="my cloze",
+            field_names={"my cloze": ["Text", "Back Extra", "uid",
+                                      "parent uid", "logseq uid", "logseq parent uid"]}
+        )
+        fields = ankifier.ankify(block)["fields"]
+        self.assertEqual(set(fields.keys()), {"Text", "uid"})
+
     def test_download_imgs(self):
         block = Block(
             content=BlockContent.from_string("![](https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png)"),
