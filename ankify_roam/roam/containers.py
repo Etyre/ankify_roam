@@ -182,6 +182,17 @@ class Block:
             parent = parent.parent
         return parent
 
+    @property
+    def parent_uid(self):
+        """uid of the parent block, or the page title for top-level blocks
+        (Roam pages have no uid in the JSON export). Same convention as
+        ankify_logseq's "logseq parent uid"."""
+        if isinstance(self.parent, Block):
+            return self.parent.uid
+        if isinstance(self.parent, Page):
+            return self.parent.title
+        return None
+
     def get(self, key, default=None):
         if not default: default=BlockChildren()
         return getattr(self, key) if hasattr(self, key) else default

@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.2.3
+
+### Features
+
+- Write the parent block's uid to the note's `parent uid` field (the page title for top-level blocks), when the note type has that field. Existing notes get the field filled on the next run, which reports them as updated once.
 
 ### Fixes
 

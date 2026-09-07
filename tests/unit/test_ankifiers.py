@@ -197,7 +197,8 @@ class TestBlockAnkifier(unittest.TestCase):
                                       "parent uid", "logseq uid", "logseq parent uid"]}
         )
         fields = ankifier.ankify(block)["fields"]
-        self.assertEqual(set(fields.keys()), {"Front", "Back", "uid"})
+        self.assertEqual(set(fields.keys()), {"Front", "Back", "uid", "parent uid"})
+        self.assertEqual(fields["parent uid"], "page")
 
         block = Block(
             content=BlockContent.from_string("a {cloze} question"),
@@ -209,7 +210,26 @@ class TestBlockAnkifier(unittest.TestCase):
                                       "parent uid", "logseq uid", "logseq parent uid"]}
         )
         fields = ankifier.ankify(block)["fields"]
-        self.assertEqual(set(fields.keys()), {"Text", "uid"})
+        self.assertEqual(set(fields.keys()), {"Text", "uid", "parent uid"})
+
+    def test_parent_uid_field(self):
+        """'parent uid' is the parent block's uid, the page title for top-level
+        blocks, and not written when the note type lacks the field."""
+        page = Page("page")
+        parent = Block(content=BlockContent.from_string("parent"), uid="PARENT123", parent=page)
+        child = Block(content=BlockContent.from_string("a {cloze} question"), uid="CHILD4567", parent=parent)
+        page.children = [parent]; parent.children = [child]
+        ankifier = BlockAnkifier(
+            note_cloze="my cloze",
+            field_names={"my cloze": ["Text", "Back Extra", "uid", "parent uid"]}
+        )
+        self.assertEqual(ankifier.ankify(child)["fields"]["parent uid"], "PARENT123")
+        self.assertEqual(ankifier.ankify(parent)["fields"]["parent uid"], "page")
+        ankifier = BlockAnkifier(
+            note_cloze="my cloze",
+            field_names={"my cloze": ["Text", "Back Extra", "uid"]}
+        )
+        self.assertNotIn("parent uid", ankifier.ankify(child)["fields"])
 
     def test_download_imgs(self):
         block = Block(

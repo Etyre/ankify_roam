@@ -292,10 +292,15 @@ class BlockAnkifier:
         # doesn't generate (e.g. "Extra", or user-added fields such as
         # "logseq uid") are left out of the dict so that they are never sent
         # to Anki, and therefore never blanked on update.
-        content_field_names = [fn for fn in field_names if fn != "uid"][:len(htmls)]
+        content_field_names = [fn for fn in field_names if fn not in ("uid", "parent uid")][:len(htmls)]
         fields = dict(zip(content_field_names, htmls))
         if "uid" in field_names:
             fields["uid"] = block.uid
+        # The parent block's uid (or the page title for top-level blocks) lets
+        # other tools locate the note's context; only written if the note type
+        # has the field.
+        if "parent uid" in field_names:
+            fields["parent uid"] = block.parent_uid or ""
 
         return fields
 
