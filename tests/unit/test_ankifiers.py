@@ -300,6 +300,16 @@ class TestBlockAnkifier(unittest.TestCase):
         }
         self.assertEqual(expected, ankifier.ankify(block))
 
+    def test_state_block_is_not_ankified(self):
+        # auto-anki's hidden state block stores every note's text, "#ankify" included,
+        # inside its JSON; it must not be ankified itself
+        from ankify_roam.ankifiers import RoamGraphAnkifier
+        ankifier = RoamGraphAnkifier()
+        state = Block.from_string('#auto-anki-state {"notes":{"x":{"text":"What is a dopamine neuron? #ankify"}}}')
+        self.assertFalse(ankifier.is_block_to_ankify(state))
+        note = Block.from_string("What is a dopamine neuron? #ankify")
+        self.assertTrue(ankifier.is_block_to_ankify(note))
+
     def test_suspend(self):
         ankifier = BlockAnkifier()
         block = Block.from_string("a block #[[[[ankify_roam]]: suspend=True]]")
@@ -309,6 +319,28 @@ class TestBlockAnkifier(unittest.TestCase):
         block = Block.from_string("a block")
         self.assertEqual(ankifier._get_suspend(block), None)
         
+    def test_flag_note(self):
+        """suspend=False cards get the purple flag; cards already flagged are skipped."""
+        calls = []
+        def fake_invoke(action, **params):
+            calls.append((action, params))
+            if action == "findCards":
+                return [101, 102]
+            return [True]
+        saved = anki._invoke
+        anki._invoke = fake_invoke
+        try:
+            res = anki.flag_note({"fields": {"uid": "abc123"}}, anki.FLAG_PURPLE)
+        finally:
+            anki._invoke = saved
+        self.assertEqual(anki.FLAG_PURPLE, 7)
+        self.assertEqual(calls, [
+            ("findCards", {"query": "uid:abc123 -flag:7"}),
+            ("setSpecificValueOfCard", {"card": 101, "keys": ["flags"], "newValues": [7]}),
+            ("setSpecificValueOfCard", {"card": 102, "keys": ["flags"], "newValues": [7]}),
+        ])
+        self.assertEqual(res, [[True], [True]])
+
     def test_assign_cloze_ids(self):
         block = Block(
             content=BlockContent.from_string("something {with} some {c1:clozes} in {it}"),

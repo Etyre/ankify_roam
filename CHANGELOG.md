@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- Blocks tagged `#auto-anki-state` (auto-anki's hidden bookkeeping block, whose JSON stores the text of every note it wrote, `#ankify` included) are never ankified. Previously each one became a bogus cloze note.
+
+### Features
+
+- Cards of a block tagged `#[[ankify_roam: suspend=False]]` are given a purple flag (`flag:7`) in Anki, in addition to being unsuspended. Cards that already have the flag are left untouched, so repeated runs don't modify them.
+
 ## 0.2.3
 
 ### Features

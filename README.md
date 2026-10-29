@@ -160,6 +160,8 @@ You can also specify the deck and note type on a per-note basis using tags in Ro
 
 (When a deck or note type is specified using a tag on the block, those will take precedence over the deck and note type specified at the command line.)
 
+To suspend or unsuspend a block's cards from Roam, tag it with `#[[ankify_roam: suspend=True]]` or `#[[ankify_roam: suspend=False]]`. Cards of a block tagged `suspend=False` are also given a purple flag in Anki, so you can find them with the search `flag:7`. (The flag is not removed when the tag is removed; clear it in Anki.)
+
 ### Show parent blocks
 
 To show the parents of your ankified block, pass a number of parents (or "all") to `--num-parents`. 

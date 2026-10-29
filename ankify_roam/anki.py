@@ -67,6 +67,20 @@ def unsuspend_note(anki_dict):
     card_ids = get_card_ids(anki_dict)
     return _invoke("unsuspend", cards=card_ids)
 
+# Anki card flag numbers: 1 red, 2 orange, 3 green, 4 blue, 5 pink, 6 turquoise, 7 purple
+FLAG_PURPLE = 7
+
+def flag_note(anki_dict, flag=FLAG_PURPLE):
+    """Set the flag on every card of the note. Cards that already carry the flag
+    are left alone so that repeated syncs don't touch (and re-sync) them."""
+    card_ids = get_card_ids(anki_dict, without_flag=flag)
+    return set_card_flag(card_ids, flag)
+
+def set_card_flag(card_ids, flag):
+    # AnkiConnect's setSpecificValueOfCard only takes one card at a time
+    return [_invoke("setSpecificValueOfCard", card=card_id, keys=["flags"], newValues=[flag])
+            for card_id in card_ids]
+
 def update_fields(note_id, fields):
     note = {"id":note_id, "fields": fields}
     return _invoke("updateNoteFields", note=note)
@@ -104,9 +118,11 @@ def get_note_id(anki_dict):
         return res[0]
     return None
 
-def get_card_ids(anki_dict):
-    res = _invoke('findCards', query=f"uid:{anki_dict['fields']['uid']}")
-    return res
+def get_card_ids(anki_dict, without_flag=None):
+    query = f"uid:{anki_dict['fields']['uid']}"
+    if without_flag is not None:
+        query += f" -flag:{without_flag}"
+    return _invoke('findCards', query=query)
 
 def get_note(note_id):
     res = _invoke("notesInfo", notes=[note_id])
