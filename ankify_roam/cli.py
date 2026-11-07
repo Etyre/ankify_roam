@@ -1,3 +1,17 @@
+"""ankify_roam: command-line tool that turns Roam Research blocks tagged #ankify
+into Anki notes, adding them through the AnkiConnect add-on (localhost:8765) and
+updating notes it has imported before (matched on the block uid stored in the
+note's `uid` field).
+
+Entry point: `ankify_roam add <roam export>` (see main() for the sub-commands).
+
+No config file: everything is a command-line option, or a per-block Roam tag such
+as #[[ankify_roam: deck="Math"]]. Logs go to stderr with timestamps. On Eli's Mac
+the daily launchd job com.elityre.roam-anki-autoimport (plist in
+~/Library/LaunchAgents, script in ~/Library/Scripts/roam-anki-autoimport.sh) runs
+the pip-installed copy of this package and writes its log to
+~/Library/Logs/roam-anki-autoimport.log. See README.md, "Runtime locations".
+"""
 import sys
 import inspect
 import argparse

@@ -1,9 +1,26 @@
+# Python build artefacts
 __pycache__
-*.log
+*.pyc
 *.egg-info
 build
 dist
-*.pyc
+.pytest_cache
+
+# Virtualenvs
+.venv
+venv
+
+# Editor / OS
 .DS_Store
 *.ipynb
 .archive
+
+# Logs and run state (the daily job logs to ~/Library/Logs, not here)
+*.log
+*.last-success
+
+# Roam exports and clones used for local runs: large and personal, never commit
+*.zip
+Roam-Export-*
+roam-backup-JSON-only/
+*.apkg
